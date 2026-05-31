@@ -1,0 +1,7 @@
+# Copy to backend-dev.hcl and fill in your values
+bucket         = "YOUR_STATE_BUCKET_NAME"
+key            = "terraform/dev/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "YOUR_LOCK_TABLE_NAME"
+encrypt        = true
+kms_key_id     = "YOUR_KMS_KEY_ARN"
