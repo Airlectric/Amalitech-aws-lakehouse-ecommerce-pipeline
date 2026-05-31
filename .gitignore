@@ -40,3 +40,6 @@ builds/
 *.swp
 *.swo
 CLAUDE.md
+
+# Project instruction documents (local reference only)
+*.pdf
