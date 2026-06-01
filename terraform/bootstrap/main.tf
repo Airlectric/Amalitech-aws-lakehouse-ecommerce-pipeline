@@ -47,7 +47,7 @@ resource "aws_kms_key" "state" {
 }
 
 resource "aws_kms_alias" "state" {
-  name          = "alias/${var.environment}/state-backend"
+  name          = "alias/${var.environment}/lakehouse-state-backend"
   target_key_id = aws_kms_key.state.key_id
 }
 
@@ -132,18 +132,10 @@ resource "aws_dynamodb_table" "state_lock" {
 # ---------------------------------------------------------------------------
 # GitHub OIDC provider + CI role (plan-only)
 # ---------------------------------------------------------------------------
-resource "aws_iam_openid_connect_provider" "github" {
+# The OIDC provider for token.actions.githubusercontent.com is account-wide
+# (one per account). P1 bootstrap already created it; reference it here.
+data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
-
-  client_id_list = [
-    "sts.amazonaws.com",
-  ]
-
-  # GitHub's current OIDC thumbprint.
-  # Verify at: https://token.actions.githubusercontent.com/.well-known/openid-configuration
-  thumbprint_list = [
-    "ffffffffffffffffffffffffffffffffffffffff",
-  ]
 }
 
 # The CI pipeline is PLAN-ONLY (fmt / validate / plan). It therefore needs
@@ -162,7 +154,7 @@ resource "aws_iam_role" "github_actions" {
         Sid    = "GitHubOIDC"
         Effect = "Allow"
         Principal = {
-          Federated = aws_iam_openid_connect_provider.github.arn
+          Federated = data.aws_iam_openid_connect_provider.github.arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
