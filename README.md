@@ -11,6 +11,8 @@ with CI/CD on **GitHub Actions**.
 
 ![Lakehouse Architecture](docs/lakehouse-architecture.png)
 
+> The VPC uses **three explicitly-labelled subnet tiers** (public, private, isolated), each rendered with the official AWS4 subnet icons. The **Private Subnet 10.0.10.0/24** holds the Glue PySpark jobs and the Archive Lambda; the **Isolated Subnet 10.0.20.0/24** hosts only the gateway endpoints; the **Public Subnet 10.0.0.0/24** is reserved for the NAT Gateway. The Router Lambda and Step Functions sit outside the VPC. Numbered badges 1–6 track the pipeline flow described below.
+
 ### Diagram Walkthrough
 
 The numbered badges in the diagram correspond to the main pipeline flow:
@@ -103,8 +105,7 @@ lakehouse-ecommerce-pipeline/
 │   ├── generate_dirty_data.py  # Inject nulls/dupes/orphan FKs for testing
 │   └── upload_raw.py           # Upload CSVs to S3 raw zone (simulate ingestion)
 ├── docs/
-│   ├── lakehouse-architecture.drawio.xml
-│   └── lakehouse-architecture.png
+│   └── lakehouse-architecture.png        # Architecture diagram (drawio XML source is gitignored)
 ├── terraform/
 │   ├── bootstrap/              # State backend (S3 + DynamoDB + KMS + GitHub OIDC)
 │   ├── envs/dev/               # Root composition for dev environment
