@@ -183,6 +183,26 @@ resource "aws_security_group" "lambda" {
   tags = merge(local.common_tags, { Name = "${var.environment}-lambda-sg" })
 }
 
+resource "aws_security_group_rule" "glue_self_ingress" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  self              = true
+  security_group_id = aws_security_group.glue.id
+  description       = "Glue requires self-referencing ingress for NETWORK connections"
+}
+
+resource "aws_security_group_rule" "glue_self_egress" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  self              = true
+  security_group_id = aws_security_group.glue.id
+  description       = "Glue requires self-referencing egress for NETWORK connections"
+}
+
 # Endpoints SG: accept HTTPS from Glue
 resource "aws_security_group_rule" "endpoints_ingress_glue" {
   type                     = "ingress"
