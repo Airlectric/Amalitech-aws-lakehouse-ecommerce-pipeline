@@ -89,8 +89,8 @@ resource "aws_lambda_function_event_invoke_config" "router" {
 
 # ────────────────────────────────────────────────────────────────────────────
 # FILE ARCHIVER LAMBDA
-# VPC-attached (same private subnet as Glue). Called synchronously by Step
-# Functions at the end of the pipeline – no DLQ needed.
+# Runs outside the VPC. Called synchronously by Step Functions at the end of
+# the pipeline; it only copies/deletes objects in S3.
 # ────────────────────────────────────────────────────────────────────────────
 resource "aws_lambda_function" "archiver" {
   filename         = data.archive_file.archiver.output_path
@@ -102,10 +102,6 @@ resource "aws_lambda_function" "archiver" {
   timeout          = 300
   memory_size      = 256
 
-  vpc_config {
-    subnet_ids         = var.private_subnet_ids
-    security_group_ids = [var.security_group_lambda_id]
-  }
 
   tracing_config {
     mode = "PassThrough"

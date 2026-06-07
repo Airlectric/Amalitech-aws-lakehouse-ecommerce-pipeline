@@ -18,15 +18,7 @@ variable "archived_bucket_id" {
   type        = string
 }
 
-variable "private_subnet_ids" {
-  description = "List of private subnet IDs for the archiver VPC config"
-  type        = list(string)
-}
 
-variable "security_group_lambda_id" {
-  description = "Security group ID attached to the archiver Lambda"
-  type        = string
-}
 
 variable "eventbridge_rule_name" {
   description = "Name of the EventBridge rule that invokes the router (for the SQS queue policy)"

@@ -1,9 +1,4 @@
-environment          = "lakehouse-dev"
-aws_region           = "us-east-1"
-vpc_cidr             = "10.0.0.0/16"
-availability_zone    = "us-east-1a"
-public_subnet_cidr   = "10.0.0.0/24"
-private_subnet_cidr  = "10.0.10.0/24"
-isolated_subnet_cidr = "10.0.20.0/24"
-bucket_suffix        = "108782069549"
-alert_emails         = ["daniel.doe@amalitechtraining.org"]
+environment   = "lakehouse-dev"
+aws_region    = "us-east-1"
+bucket_suffix = "108782069549"
+alert_emails  = ["daniel.doe@amalitechtraining.org"]

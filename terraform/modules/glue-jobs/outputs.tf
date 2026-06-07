@@ -13,10 +13,6 @@ output "order_items_etl_job_name" {
   value       = aws_glue_job.order_items_etl.name
 }
 
-output "glue_connection_name" {
-  description = "Name of the Glue NETWORK connection"
-  value       = aws_glue_connection.network.name
-}
 
 output "job_names" {
   description = "Map of Glue job names by dataset"
