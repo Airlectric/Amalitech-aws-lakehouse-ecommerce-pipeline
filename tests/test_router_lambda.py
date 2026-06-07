@@ -5,6 +5,7 @@ The STATE_MACHINE_ARN env-var must be set before the module is imported because
 """
 
 import json
+from datetime import date
 import os
 from unittest.mock import MagicMock, patch
 
@@ -63,6 +64,7 @@ def test_router_valid_products_key(mock_boto3, lambda_context):
     assert payload["bucket"] == "test-raw-bucket"
     assert payload["key"] == "raw/products/products.csv"
     assert "execution_id" in payload
+    date.fromisoformat(payload["run_date"])
 
 
 @patch("router.boto3")

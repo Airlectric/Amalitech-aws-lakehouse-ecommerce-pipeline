@@ -8,13 +8,14 @@ Responsibilities
    prefix.  Objects outside the recognised raw/ prefixes are silently skipped so
    that ancillary writes (manifests, temp files, etc.) never trigger a pipeline run.
 3. Start a Step Functions execution with a compact input envelope, injecting a
-   uuid4 execution_id that downstream tasks can use to correlate logs.
+   uuid4 execution_id and UTC run_date for downstream Glue arguments and logs.
 """
 
 import json
 import logging
 import os
 import uuid
+from datetime import datetime, timezone
 
 import boto3
 
@@ -75,6 +76,7 @@ def lambda_handler(event, context):
         "key": key,
         "dataset": dataset,
         "execution_id": str(uuid.uuid4()),
+        "run_date": datetime.now(timezone.utc).date().isoformat(),
     }
 
     sfn = boto3.client("stepfunctions")

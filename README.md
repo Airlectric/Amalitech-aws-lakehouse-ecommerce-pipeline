@@ -136,6 +136,27 @@ lakehouse-ecommerce-pipeline/
 - Python 3.12+
 - GitHub repository (for CI/CD)
 
+### Quick default-account run
+
+The helper below uses the AWS CLI default credential chain (`AWS_PROFILE` if set, otherwise the
+default account), preserves existing ignored Terraform config files, and runs the local prep,
+bootstrap, dev apply, and raw upload flow:
+
+```bash
+# Clean-data e2e path
+AUTO_APPROVE=true scripts/aws_e2e.sh all
+
+# Clean + dirty uploads after apply
+AUTO_APPROVE=true UPLOAD_VARIANT=both scripts/aws_e2e.sh all
+
+# Validate and plan only
+scripts/aws_e2e.sh plan
+```
+
+Project 2 bootstrap expects the account-level GitHub OIDC provider
+`token.actions.githubusercontent.com` to already exist. Project 1 bootstrap creates it; if Project 2
+is run standalone, create or import that provider before running `scripts/aws_e2e.sh bootstrap`.
+
 ### 1. Prepare the data
 
 ```bash

@@ -208,3 +208,44 @@ resource "aws_iam_role_policy" "github_actions_state_backend" {
     ]
   })
 }
+
+
+# ---------------------------------------------------------------------------
+# GitHub OIDC apply role (manual, protected environment only)
+# ---------------------------------------------------------------------------
+# This role is intentionally separate from the plan role. It has broad apply
+# permissions for this training project, but GitHub can only assume it from the
+# protected `dev` environment subject.
+resource "aws_iam_role" "github_actions_apply" {
+  name = "${var.environment}-lakehouse-github-actions-apply"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "GitHubOIDCApplyEnvironment"
+        Effect = "Allow"
+        Principal = {
+          Federated = data.aws_iam_openid_connect_provider.github.arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+            "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:environment:${var.environment}"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = merge(local.common_tags, {
+    Name             = "${var.environment}-lakehouse-github-actions-apply"
+    DeploymentAccess = "apply"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_apply_admin" {
+  role       = aws_iam_role.github_actions_apply.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
