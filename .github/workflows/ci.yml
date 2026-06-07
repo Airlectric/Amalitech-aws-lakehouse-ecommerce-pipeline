@@ -121,7 +121,6 @@ jobs:
           cp ../../../config/backend-dev.hcl.example backend-dev.hcl
           sed -i "s/YOUR_ACCOUNT_ID/${{ secrets.AWS_ACCOUNT_ID }}/" backend-dev.hcl
           sed -i "s/YOUR_STATE_BUCKET_NAME/${{ secrets.P2_TF_STATE_BUCKET }}/" backend-dev.hcl
-          sed -i "s/YOUR_LOCK_TABLE_NAME/${{ secrets.P2_TF_LOCK_TABLE }}/" backend-dev.hcl
           sed -i "s|YOUR_KMS_KEY_ARN|${{ secrets.P2_TF_STATE_KMS_KEY_ARN }}|" backend-dev.hcl
           terraform init -backend-config=backend-dev.hcl
 
@@ -193,7 +192,6 @@ jobs:
           cp ../../../config/backend-dev.hcl.example backend-dev.hcl
           sed -i "s/YOUR_ACCOUNT_ID/${{ secrets.AWS_ACCOUNT_ID }}/" backend-dev.hcl
           sed -i "s/YOUR_STATE_BUCKET_NAME/${{ secrets.P2_TF_STATE_BUCKET }}/" backend-dev.hcl
-          sed -i "s/YOUR_LOCK_TABLE_NAME/${{ secrets.P2_TF_LOCK_TABLE }}/" backend-dev.hcl
           sed -i "s|YOUR_KMS_KEY_ARN|${{ secrets.P2_TF_STATE_KMS_KEY_ARN }}|" backend-dev.hcl
           terraform init -backend-config=backend-dev.hcl
 
@@ -229,7 +227,6 @@ jobs:
           cp ../../../config/backend-dev.hcl.example backend-dev.hcl
           sed -i "s/YOUR_ACCOUNT_ID/${{ secrets.AWS_ACCOUNT_ID }}/" backend-dev.hcl
           sed -i "s/YOUR_STATE_BUCKET_NAME/${{ secrets.P2_TF_STATE_BUCKET }}/" backend-dev.hcl
-          sed -i "s/YOUR_LOCK_TABLE_NAME/${{ secrets.P2_TF_LOCK_TABLE }}/" backend-dev.hcl
           sed -i "s|YOUR_KMS_KEY_ARN|${{ secrets.P2_TF_STATE_KMS_KEY_ARN }}|" backend-dev.hcl
           terraform init -backend-config=backend-dev.hcl
 
