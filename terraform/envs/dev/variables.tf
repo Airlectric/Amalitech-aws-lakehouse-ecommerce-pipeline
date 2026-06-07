@@ -1,7 +1,7 @@
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "dev"
+  default     = "lakehouse-dev"
 }
 
 variable "aws_region" {

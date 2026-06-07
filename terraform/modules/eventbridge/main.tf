@@ -46,14 +46,3 @@ resource "aws_cloudwatch_event_target" "router_lambda" {
   }
 }
 
-# ────────────────────────────────────────────────────────────────────────────
-# LAMBDA PERMISSION
-# Grant EventBridge permission to invoke the router.
-# ────────────────────────────────────────────────────────────────────────────
-resource "aws_lambda_permission" "allow_eventbridge" {
-  statement_id  = "AllowEventBridgeInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = var.router_lambda_arn
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.raw_s3_put.arn
-}
