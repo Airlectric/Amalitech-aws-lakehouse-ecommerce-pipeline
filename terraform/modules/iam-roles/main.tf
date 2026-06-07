@@ -58,20 +58,32 @@ resource "aws_iam_role_policy" "glue_etl_s3" {
         ]
       },
       {
-        Sid    = "WriteDwh"
+        Sid    = "ReadWriteDwh"
         Effect = "Allow"
-        Action = ["s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
+        Action = [
+          "s3:AbortMultipartUpload",
+          "s3:DeleteObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:ListBucketMultipartUploads",
+          "s3:ListMultipartUploadParts",
+          "s3:PutObject",
+        ]
         Resource = [
           var.dwh_bucket_arn,
-          "${var.dwh_bucket_arn}/dwh/*",
+          "${var.dwh_bucket_arn}/*",
         ]
       },
       {
         Sid    = "WriteRejected"
         Effect = "Allow"
-        Action = ["s3:PutObject"]
+        Action = [
+          "s3:AbortMultipartUpload",
+          "s3:ListMultipartUploadParts",
+          "s3:PutObject",
+        ]
         Resource = [
-          "${var.rejected_bucket_arn}/rejected/*",
+          "${var.rejected_bucket_arn}/*",
         ]
       },
     ]
