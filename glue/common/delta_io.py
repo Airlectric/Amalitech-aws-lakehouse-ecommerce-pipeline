@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, SparkSession
