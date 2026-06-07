@@ -1,10 +1,11 @@
 # ────────────────────────────────────────────────────────────────────────────
 # COMMON LIBRARY ZIP
-# Packages glue/common/ so all three jobs can import shared helpers.
+# Packages glue/common/ with the package directory preserved so imports like
+# `from common.schemas import ...` resolve in AWS Glue.
 # ────────────────────────────────────────────────────────────────────────────
 data "archive_file" "common_zip" {
   type        = "zip"
-  source_dir  = "${path.root}/../../../glue/common"
+  source_dir  = "${path.root}/../../../glue"
   output_path = "${path.module}/builds/common.zip"
 }
 
