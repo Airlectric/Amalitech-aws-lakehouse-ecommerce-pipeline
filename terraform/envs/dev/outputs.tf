@@ -1,13 +1,3 @@
-output "vpc_id" {
-  description = "ID of the VPC"
-  value       = module.networking.vpc_id
-}
-
-output "private_subnet_id" {
-  description = "ID of the private subnet"
-  value       = module.networking.private_subnet_id
-}
-
 output "raw_bucket_id" {
   description = "ID of the raw landing zone S3 bucket"
   value       = module.s3_data_lake.raw_bucket_id

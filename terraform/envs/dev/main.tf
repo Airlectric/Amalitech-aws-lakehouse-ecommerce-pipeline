@@ -9,19 +9,6 @@ module "kms" {
   environment = var.environment
 }
 
-# ── Networking (VPC, subnets, NAT GW, VPC endpoints, security groups) ────────
-module "networking" {
-  source      = "../../modules/networking"
-  environment = var.environment
-
-  vpc_cidr             = var.vpc_cidr
-  availability_zone    = var.availability_zone
-  public_subnet_cidr   = var.public_subnet_cidr
-  private_subnet_cidr  = var.private_subnet_cidr
-  isolated_subnet_cidr = var.isolated_subnet_cidr
-  kms_key_arn          = module.kms.logs_key_arn
-  enable_flow_logs     = true
-}
 
 # ── S3 data lake buckets ──────────────────────────────────────────────────────
 module "s3_data_lake" {
@@ -68,9 +55,6 @@ module "glue_jobs" {
   rejected_bucket_id = module.s3_data_lake.rejected_bucket_id
   glue_etl_role_arn  = module.iam_roles.glue_etl_role_arn
 
-  private_subnet_id      = module.networking.private_subnet_id
-  glue_az                = module.networking.glue_az
-  security_group_glue_id = module.networking.security_group_glue_id
 
   worker_count    = var.worker_count
   max_retries     = var.glue_max_retries
@@ -85,8 +69,6 @@ module "lambda_functions" {
   archived_bucket_id       = module.s3_data_lake.archived_bucket_id
   lambda_router_role_arn   = module.iam_roles.lambda_router_role_arn
   lambda_archiver_role_arn = module.iam_roles.lambda_archiver_role_arn
-  private_subnet_ids       = [module.networking.private_subnet_id]
-  security_group_lambda_id = module.networking.security_group_lambda_id
 }
 
 # ── Step Functions state machine ─────────────────────────────────────────────

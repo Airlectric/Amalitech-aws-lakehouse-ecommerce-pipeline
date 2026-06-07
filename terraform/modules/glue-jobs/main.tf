@@ -47,23 +47,6 @@ resource "aws_s3_object" "order_items_etl_script" {
   tags = merge(local.common_tags, { Name = "order_items_etl.py" })
 }
 
-# ────────────────────────────────────────────────────────────────────────────
-# VPC NETWORK CONNECTION
-# Attaches Glue workers to the private subnet so they reach S3 via the VPC
-# gateway endpoint without internet egress.
-# ────────────────────────────────────────────────────────────────────────────
-resource "aws_glue_connection" "network" {
-  name            = "${var.environment}-glue-network"
-  connection_type = "NETWORK"
-
-  physical_connection_requirements {
-    availability_zone      = var.glue_az
-    subnet_id              = var.private_subnet_id
-    security_group_id_list = [var.security_group_glue_id]
-  }
-
-  tags = merge(local.common_tags, { Name = "${var.environment}-glue-network" })
-}
 
 # ────────────────────────────────────────────────────────────────────────────
 # PRODUCTS ETL JOB
@@ -71,8 +54,6 @@ resource "aws_glue_connection" "network" {
 resource "aws_glue_job" "products_etl" {
   name        = "${var.environment}-products-etl"
   role_arn    = var.glue_etl_role_arn
-  connections = [aws_glue_connection.network.name]
-
   glue_version      = "4.0"
   worker_type       = "G.1X"
   number_of_workers = var.worker_count
@@ -109,8 +90,6 @@ resource "aws_glue_job" "products_etl" {
 resource "aws_glue_job" "orders_etl" {
   name        = "${var.environment}-orders-etl"
   role_arn    = var.glue_etl_role_arn
-  connections = [aws_glue_connection.network.name]
-
   glue_version      = "4.0"
   worker_type       = "G.1X"
   number_of_workers = var.worker_count
@@ -147,8 +126,6 @@ resource "aws_glue_job" "orders_etl" {
 resource "aws_glue_job" "order_items_etl" {
   name        = "${var.environment}-order-items-etl"
   role_arn    = var.glue_etl_role_arn
-  connections = [aws_glue_connection.network.name]
-
   glue_version      = "4.0"
   worker_type       = "G.1X"
   number_of_workers = var.worker_count

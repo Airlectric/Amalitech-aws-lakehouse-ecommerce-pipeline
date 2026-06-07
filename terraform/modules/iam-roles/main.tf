@@ -189,10 +189,6 @@ resource "aws_iam_role_policy_attachment" "lambda_archiver_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_archiver_vpc" {
-  role       = aws_iam_role.lambda_archiver.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-}
 
 resource "aws_iam_role_policy" "lambda_archiver_s3" {
   name = "${var.environment}-lambda-archiver-s3"

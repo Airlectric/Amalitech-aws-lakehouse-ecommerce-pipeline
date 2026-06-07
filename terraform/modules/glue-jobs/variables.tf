@@ -28,20 +28,8 @@ variable "glue_etl_role_arn" {
   type        = string
 }
 
-variable "private_subnet_id" {
-  description = "Private subnet ID for the Glue NETWORK connection"
-  type        = string
-}
 
-variable "glue_az" {
-  description = "Availability zone of the private subnet used by the Glue NETWORK connection"
-  type        = string
-}
 
-variable "security_group_glue_id" {
-  description = "Security group ID for Glue jobs"
-  type        = string
-}
 
 variable "worker_count" {
   description = "Number of G.1X workers per Glue job"

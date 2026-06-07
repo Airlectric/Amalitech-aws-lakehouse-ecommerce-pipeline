@@ -10,35 +10,10 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "vpc_cidr" {
-  description = "CIDR block for the VPC"
-  type        = string
-  default     = "10.0.0.0/16"
-}
 
-variable "availability_zone" {
-  description = "Availability zone for all subnets"
-  type        = string
-  default     = "us-east-1a"
-}
 
-variable "public_subnet_cidr" {
-  description = "CIDR block for the public subnet"
-  type        = string
-  default     = "10.0.0.0/24"
-}
 
-variable "private_subnet_cidr" {
-  description = "CIDR block for the private subnet"
-  type        = string
-  default     = "10.0.10.0/24"
-}
 
-variable "isolated_subnet_cidr" {
-  description = "CIDR block for the isolated subnet"
-  type        = string
-  default     = "10.0.20.0/24"
-}
 
 variable "bucket_suffix" {
   description = "Suffix appended to all S3 bucket names (typically the AWS account ID)"
