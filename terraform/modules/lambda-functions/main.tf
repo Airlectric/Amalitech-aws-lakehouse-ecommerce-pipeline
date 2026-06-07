@@ -120,3 +120,15 @@ resource "aws_lambda_function" "archiver" {
   tags = merge(local.common_tags, { Name = "${var.environment}-file-archiver" })
 }
 
+# ────────────────────────────────────────────────────────────────────────────
+# LAMBDA PERMISSIONS
+# ────────────────────────────────────────────────────────────────────────────
+
+# Allow any EventBridge rule in this account/region to invoke the router.
+resource "aws_lambda_permission" "router_from_eventbridge" {
+  statement_id  = "AllowEventBridgeInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.router.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = "arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:rule/${var.environment}-raw-s3-put"
+}
