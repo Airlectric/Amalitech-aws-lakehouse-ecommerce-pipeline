@@ -52,8 +52,8 @@ resource "aws_s3_object" "order_items_etl_script" {
 # PRODUCTS ETL JOB
 # ────────────────────────────────────────────────────────────────────────────
 resource "aws_glue_job" "products_etl" {
-  name        = "${var.environment}-products-etl"
-  role_arn    = var.glue_etl_role_arn
+  name              = "${var.environment}-products-etl"
+  role_arn          = var.glue_etl_role_arn
   glue_version      = "4.0"
   worker_type       = "G.1X"
   number_of_workers = var.worker_count
@@ -88,8 +88,8 @@ resource "aws_glue_job" "products_etl" {
 # ORDERS ETL JOB
 # ────────────────────────────────────────────────────────────────────────────
 resource "aws_glue_job" "orders_etl" {
-  name        = "${var.environment}-orders-etl"
-  role_arn    = var.glue_etl_role_arn
+  name              = "${var.environment}-orders-etl"
+  role_arn          = var.glue_etl_role_arn
   glue_version      = "4.0"
   worker_type       = "G.1X"
   number_of_workers = var.worker_count
@@ -124,8 +124,8 @@ resource "aws_glue_job" "orders_etl" {
 # ORDER ITEMS ETL JOB
 # ────────────────────────────────────────────────────────────────────────────
 resource "aws_glue_job" "order_items_etl" {
-  name        = "${var.environment}-order-items-etl"
-  role_arn    = var.glue_etl_role_arn
+  name              = "${var.environment}-order-items-etl"
+  role_arn          = var.glue_etl_role_arn
   glue_version      = "4.0"
   worker_type       = "G.1X"
   number_of_workers = var.worker_count
