@@ -236,6 +236,16 @@ resource "aws_security_group_rule" "glue_egress_endpoints" {
   description              = "HTTPS to VPC interface endpoints"
 }
 
+resource "aws_security_group_rule" "glue_egress_https_all" {
+  type              = "egress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.glue.id
+  description       = "HTTPS egress for Glue bootstrap downloads"
+}
+
 # Glue SG: egress to S3 via gateway endpoint prefix list
 resource "aws_security_group_rule" "glue_egress_s3_gateway" {
   type              = "egress"
