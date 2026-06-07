@@ -33,6 +33,8 @@ permissions:
 env:
   TF_VERSION: "1.7"
   TF_ENV: "dev"
+  AWS_DEFAULT_REGION: "us-east-1"
+  AWS_REGION: "us-east-1"
 
 jobs:
   test:
@@ -157,11 +159,8 @@ jobs:
           sed -i "s|YOUR_KMS_KEY_ARN|${{ secrets.P2_TF_STATE_KMS_KEY_ARN }}|" backend-dev.hcl
           terraform init -backend-config=backend-dev.hcl
 
-      - name: Download Plan Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: p2-${{ env.TF_ENV }}-tfplan
-          path: terraform/envs/dev
+      - name: Terraform Plan for Apply
+        run: terraform plan -no-color -out=tfplan -var="bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }}"
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan

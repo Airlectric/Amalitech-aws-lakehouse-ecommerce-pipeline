@@ -161,7 +161,7 @@ resource "aws_vpc_endpoint" "interface" {
 # ---------------------------------------------------------------------------
 resource "aws_security_group" "endpoints" {
   name        = "${var.environment}-vpc-endpoints"
-  description = "Security group for VPC interface endpoints — allows HTTPS from Glue and Lambda"
+  description = "Security group for VPC interface endpoints - allows HTTPS from Glue and Lambda"
   vpc_id      = aws_vpc.main.id
 
   tags = merge(local.common_tags, { Name = "${var.environment}-vpc-endpoints-sg" })
