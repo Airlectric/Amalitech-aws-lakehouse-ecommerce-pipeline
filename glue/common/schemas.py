@@ -1,11 +1,9 @@
 from pyspark.sql.types import (
-    DateType,
     FloatType,
     IntegerType,
     StringType,
     StructField,
     StructType,
-    TimestampType,
 )
 
 
