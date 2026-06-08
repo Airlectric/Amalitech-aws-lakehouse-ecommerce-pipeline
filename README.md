@@ -11,7 +11,7 @@ with CI/CD on **GitHub Actions**.
 
 ![Lakehouse Architecture](docs/lakehouse-architecture.png)
 
-> The current dev architecture is fully serverless and does **not** attach Lambda or Glue jobs to a VPC. EventBridge, Lambda, Step Functions, Glue, S3, Athena, CloudWatch, CloudTrail, SNS, SQS, IAM, and KMS communicate through AWS-managed service endpoints with least-privilege IAM and KMS encryption. Numbered badges 1–6 track the pipeline flow described below.
+> The current dev architecture is fully serverless and does **not** attach Lambda or Glue jobs to a VPC. EventBridge, Lambda, Step Functions, Glue, S3, Athena, CloudWatch, CloudTrail, SNS, SQS, IAM, and KMS communicate through AWS-managed service endpoints with least-privilege IAM and KMS encryption. Numbered badges 1–7 track the pipeline flow described below.
 
 ### Diagram Walkthrough
 
@@ -22,21 +22,25 @@ The numbered badges in the diagram correspond to the main pipeline flow:
 2. **Event routing:** EventBridge captures the event and invokes the **Router Lambda**. Delivery
    failures after retries land in the **SQS dead-letter queue** — no event is silently lost.
 3. **Orchestration trigger:** The Router calls Step Functions `StartExecution` and hands off the
-   payload (bucket, key, dataset, run date). Step Functions orchestrates every subsequent step.
-4. **Delta ETL:** Three **Glue PySpark + Delta Lake** jobs run as managed Glue jobs. Each job:
-   - Reads raw CSV with an explicit schema (no `inferSchema` — schema enforcement at read time).
-   - Validates rows: no-null PKs, parseable timestamps, value ranges; rejected rows written to
-     **Rejected S3** with reasons logged.
-   - Deduplicates by PK (window function, latest-wins).
-   - Writes to **lakehouse-dwh/** via Delta **MERGE INTO** (upsert — idempotent re-runs).
-   - Delta enabled via `--datalake-formats delta` (bundled in Glue 4.0; no PyPI / internet needed).
-5. **Archival:** On all-jobs success, the **Archive Lambda** moves source files
-   `raw/ → archived/`. It fails loud on any error so Step Functions `Catch` can alert.
-6. **Analytics:** Delta tables are registered in the **Glue Data Catalog**. **Athena (engine v3)**
-   reads them natively via the Delta transaction log. Analysts query directly without ETL re-runs.
+   payload (bucket, key, dataset, run date). Step Functions routes the event by dataset and
+   orchestrates the remaining states.
+4. **Delta ETL:** Step Functions starts the matching managed **Glue PySpark + Delta Lake** job
+   (`products-etl`, `orders-etl`, or `order-items-etl`; full-load events can run all three in
+   parallel). Each job reads raw CSV with explicit schemas, validates rows, deduplicates by primary
+   key, and writes invalid rows with rejection reasons to **Rejected S3**.
+5. **Delta lakehouse storage:** Valid rows are merged into **lakehouse-dwh S3** as Delta tables via
+   `MERGE INTO`, giving idempotent upserts and ACID transaction logs for `products`, `orders`, and
+   `order_items`.
+6. **Archival:** On successful ETL, the **Archive Lambda** moves processed source files from
+   `raw/` to **Archived S3**. It fails loud on any copy/delete error so Step Functions `Catch` can
+   alert instead of reporting a false success.
+7. **Catalog and analytics:** Delta tables are registered in the **Glue Data Catalog**. **Athena
+   engine v3** reads them natively through the Delta transaction log and writes encrypted query
+   results to the Athena results bucket for analyst access.
 
-Failures at any step trigger an SNS alert to on-call. **CloudTrail** audits all data-movement
-events (S3 + Glue + SFN).
+Failures at any step trigger SNS alerts to on-call and EventBridge/router delivery failures are
+captured in the SQS DLQ. **CloudTrail** audits data-movement events across S3, Glue, and Step
+Functions.
 
 ---
 
