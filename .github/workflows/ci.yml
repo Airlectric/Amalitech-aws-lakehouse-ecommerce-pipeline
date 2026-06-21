@@ -133,7 +133,7 @@ jobs:
 
       - name: Terraform Plan
         run: |
-          terraform plan -lock=false -no-color -out=tfplan -var="bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }}"
+          terraform plan -no-color -out=tfplan -var="bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }}"
           terraform show -no-color tfplan > tfplan.txt
 
       - name: Upload Plan Artifact
