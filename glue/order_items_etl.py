@@ -23,89 +23,71 @@ Processing steps
 
 import sys
 
-from awsglue.utils import getResolvedOptions
 from pyspark.sql import SparkSession
 
 from common.delta_io import dedup_df, merge_into_delta, write_rejected
 from common.schemas import get_order_items_schema
 from common.validation import validate_df
 
-# ---------------------------------------------------------------------------
-# 1. Resolve Glue job arguments
-# ---------------------------------------------------------------------------
-args = getResolvedOptions(
-    sys.argv,
-    ["raw_bucket", "dwh_path", "rejected_path", "run_date"],
-)
 
-raw_bucket = args["raw_bucket"]
-dwh_path = args["dwh_path"].rstrip("/")
-rejected_path = args["rejected_path"].rstrip("/")
-run_date = args["run_date"]
+def main():
+    from awsglue.utils import getResolvedOptions
 
-# ---------------------------------------------------------------------------
-# 2. Initialise SparkSession with Delta Lake extensions
-# ---------------------------------------------------------------------------
-spark = (
-    SparkSession.builder.appName("OrderItemsETL")
-    .config(
-        "spark.sql.extensions",
-        "io.delta.sql.DeltaSparkSessionExtension",
+    args = getResolvedOptions(
+        sys.argv,
+        ["raw_bucket", "dwh_path", "rejected_path", "run_date"],
     )
-    .config(
-        "spark.sql.catalog.spark_catalog",
-        "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+
+    raw_bucket = args["raw_bucket"]
+    dwh_path = args["dwh_path"].rstrip("/")
+    rejected_path = args["rejected_path"].rstrip("/")
+    run_date = args["run_date"]
+
+    spark = (
+        SparkSession.builder.appName("OrderItemsETL")
+        .config(
+            "spark.sql.extensions",
+            "io.delta.sql.DeltaSparkSessionExtension",
+        )
+        .config(
+            "spark.sql.catalog.spark_catalog",
+            "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+        )
+        .getOrCreate()
     )
-    .getOrCreate()
-)
 
-spark.conf.set("spark.sql.sources.partitionOverwriteMode", "dynamic")
+    spark.conf.set("spark.sql.sources.partitionOverwriteMode", "dynamic")
 
-# ---------------------------------------------------------------------------
-# 3. Read raw CSV
-# ---------------------------------------------------------------------------
-order_items_raw_path = f"s3://{raw_bucket}/raw/order_items/"
+    order_items_raw_path = f"s3://{raw_bucket}/raw/order_items/"
+    print(
+        f"[order_items_etl] run_date={run_date} "
+        f"Reading raw order_items from {order_items_raw_path}"
+    )
 
-print(
-    f"[order_items_etl] run_date={run_date} "
-    f"Reading raw order_items from {order_items_raw_path}"
-)
+    order_items_df = (
+        spark.read.option("header", "true")
+        .schema(get_order_items_schema())
+        .csv(order_items_raw_path)
+    )
 
-order_items_df = (
-    spark.read.option("header", "true")
-    .schema(get_order_items_schema())
-    .csv(order_items_raw_path)
-)
+    valid_df, rejected_df = validate_df(order_items_df, "order_items", spark)
 
-# ---------------------------------------------------------------------------
-# 4. Validate
-# ---------------------------------------------------------------------------
-valid_df, rejected_df = validate_df(order_items_df, "order_items", spark)
+    deduped_df = dedup_df(valid_df, pk_col="id", ts_col="order_timestamp")
 
-# ---------------------------------------------------------------------------
-# 5. Deduplicate — keep the row with the most recent order_timestamp per id
-# ---------------------------------------------------------------------------
-deduped_df = dedup_df(valid_df, pk_col="id", ts_col="order_timestamp")
+    target_delta_path = f"{dwh_path}/order_items/"
+    merge_into_delta(
+        spark,
+        deduped_df,
+        target_delta_path,
+        pk_col="id",
+        partition_col="date",
+    )
 
-# ---------------------------------------------------------------------------
-# 6. Merge into Delta, partitioned by the 'date' column
-# ---------------------------------------------------------------------------
-target_delta_path = f"{dwh_path}/order_items/"
-merge_into_delta(
-    spark,
-    deduped_df,
-    target_delta_path,
-    pk_col="id",
-    partition_col="date",
-)
+    write_rejected(rejected_df, rejected_path, "order_items")
 
-# ---------------------------------------------------------------------------
-# 7. Persist rejected rows
-# ---------------------------------------------------------------------------
-write_rejected(rejected_df, rejected_path, "order_items")
+    print(f"[order_items_etl] Job completed successfully for run_date={run_date}.")
+    spark.stop()
 
-# ---------------------------------------------------------------------------
-# 8. Done
-# ---------------------------------------------------------------------------
-print(f"[order_items_etl] Job completed successfully for run_date={run_date}.")
-spark.stop()
+
+if __name__ == "__main__":
+    main()
