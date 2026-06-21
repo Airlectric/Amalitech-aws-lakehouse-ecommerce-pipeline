@@ -48,3 +48,15 @@ variable "timeout_minutes" {
   type        = number
   default     = 60
 }
+
+variable "maintenance_schedule" {
+  description = "EventBridge Scheduler cron expression for the daily Delta maintenance run"
+  type        = string
+  default     = "cron(0 2 * * ? *)"
+}
+
+variable "vacuum_retain_hours" {
+  description = "Minimum hours to retain Delta Lake file versions before VACUUM removes them (must be >= 168)"
+  type        = number
+  default     = 168
+}
