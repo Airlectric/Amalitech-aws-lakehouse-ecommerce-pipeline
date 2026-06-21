@@ -14,7 +14,9 @@ environments that only have the lightweight dependencies installed.
 import pytest
 
 pyspark = pytest.importorskip("pyspark", reason="PySpark not installed; skipping Spark tests")
+pytest.importorskip("delta", reason="delta-spark not installed; skipping Spark tests")
 
+from delta import configure_spark_with_delta_pip  # noqa: E402
 from pyspark.sql import SparkSession  # noqa: E402
 from pyspark.sql.types import (  # noqa: E402
     FloatType,
@@ -35,14 +37,19 @@ from common.validation import validate_df  # noqa: E402
 @pytest.fixture(scope="module")
 def spark():
     """Lightweight local[1] SparkSession for unit testing."""
-    session = (
+    builder = (
         SparkSession.builder
         .master("local[1]")
         .appName("lakehouse-validation-tests")
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+        .config(
+            "spark.sql.catalog.spark_catalog",
+            "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+        )
         .config("spark.sql.shuffle.partitions", "1")
         .config("spark.ui.enabled", "false")
-        .getOrCreate()
     )
+    session = configure_spark_with_delta_pip(builder).getOrCreate()
     yield session
     session.stop()
 

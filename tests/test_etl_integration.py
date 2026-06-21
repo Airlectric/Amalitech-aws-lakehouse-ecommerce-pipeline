@@ -28,17 +28,12 @@ import tempfile
 import pytest
 
 pyspark = pytest.importorskip("pyspark", reason="PySpark not installed; skipping Spark tests")
+delta = pytest.importorskip("delta", reason="delta-spark not installed; skipping Spark tests")
 
+from delta import configure_spark_with_delta_pip  # noqa: E402
 from pyspark.sql import SparkSession  # noqa: E402
-from pyspark.sql.types import (  # noqa: E402
-    FloatType,
-    IntegerType,
-    StringType,
-    StructField,
-    StructType,
-)
 
-from common.delta_io import dedup_df, merge_into_delta, write_rejected  # noqa: E402
+from common.delta_io import dedup_df, merge_into_delta  # noqa: E402
 from common.schemas import (  # noqa: E402
     get_order_items_schema,
     get_orders_schema,
@@ -56,7 +51,7 @@ from common.validation import (  # noqa: E402
 
 @pytest.fixture(scope="module")
 def spark():
-    session = (
+    builder = (
         SparkSession.builder.master("local[2]")
         .appName("lakehouse-integration-tests")
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
@@ -66,8 +61,8 @@ def spark():
         )
         .config("spark.sql.shuffle.partitions", "1")
         .config("spark.ui.enabled", "false")
-        .getOrCreate()
     )
+    session = configure_spark_with_delta_pip(builder).getOrCreate()
     yield session
     session.stop()
 
