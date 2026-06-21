@@ -5,7 +5,7 @@
 # ────────────────────────────────────────────────────────────────────────────
 data "archive_file" "common_zip" {
   type        = "zip"
-  source_dir  = "${path.root}/../../../glue"
+  source_dir  = "${path.root}/../../../src/glue_jobs"
   output_path = "${path.module}/builds/common.zip"
 }
 
@@ -24,8 +24,8 @@ resource "aws_s3_object" "common_zip" {
 resource "aws_s3_object" "products_etl_script" {
   bucket = var.scripts_bucket_id
   key    = "${local.script_key}/products_etl.py"
-  source = "${path.root}/../../../glue/products_etl.py"
-  etag   = filemd5("${path.root}/../../../glue/products_etl.py")
+  source = "${path.root}/../../../src/glue_jobs/products_etl.py"
+  etag   = filemd5("${path.root}/../../../src/glue_jobs/products_etl.py")
 
   tags = merge(local.common_tags, { Name = "products_etl.py" })
 }
@@ -33,8 +33,8 @@ resource "aws_s3_object" "products_etl_script" {
 resource "aws_s3_object" "orders_etl_script" {
   bucket = var.scripts_bucket_id
   key    = "${local.script_key}/orders_etl.py"
-  source = "${path.root}/../../../glue/orders_etl.py"
-  etag   = filemd5("${path.root}/../../../glue/orders_etl.py")
+  source = "${path.root}/../../../src/glue_jobs/orders_etl.py"
+  etag   = filemd5("${path.root}/../../../src/glue_jobs/orders_etl.py")
 
   tags = merge(local.common_tags, { Name = "orders_etl.py" })
 }
@@ -42,8 +42,8 @@ resource "aws_s3_object" "orders_etl_script" {
 resource "aws_s3_object" "order_items_etl_script" {
   bucket = var.scripts_bucket_id
   key    = "${local.script_key}/order_items_etl.py"
-  source = "${path.root}/../../../glue/order_items_etl.py"
-  etag   = filemd5("${path.root}/../../../glue/order_items_etl.py")
+  source = "${path.root}/../../../src/glue_jobs/order_items_etl.py"
+  etag   = filemd5("${path.root}/../../../src/glue_jobs/order_items_etl.py")
 
   tags = merge(local.common_tags, { Name = "order_items_etl.py" })
 }

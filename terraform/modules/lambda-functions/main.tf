@@ -37,13 +37,13 @@ resource "aws_sqs_queue_policy" "pipeline_dlq" {
 # ────────────────────────────────────────────────────────────────────────────
 data "archive_file" "router" {
   type        = "zip"
-  source_file = "${path.root}/../../../lambda/handlers/router.py"
+  source_file = "${path.root}/../../../src/lambda_functions/router.py"
   output_path = "${path.module}/builds/router.zip"
 }
 
 data "archive_file" "archiver" {
   type        = "zip"
-  source_file = "${path.root}/../../../lambda/handlers/archiver.py"
+  source_file = "${path.root}/../../../src/lambda_functions/archiver.py"
   output_path = "${path.module}/builds/archiver.zip"
 }
 
