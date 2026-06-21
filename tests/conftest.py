@@ -7,10 +7,10 @@ from unittest.mock import MagicMock
 # as packages.  Both directories are inserted at position 0 so they take
 # precedence over any installed versions.
 HANDLERS_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "lambda", "handlers")
+    os.path.join(os.path.dirname(__file__), "..", "src", "lambda_functions")
 )
 GLUE_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "glue")
+    os.path.join(os.path.dirname(__file__), "..", "src", "glue_jobs")
 )
 
 sys.path.insert(0, GLUE_DIR)
@@ -22,6 +22,10 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers",
         "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    )
+    config.addinivalue_line(
+        "markers",
+        "spark: marks tests that require PySpark + Java 11 (skip with '-m \"not spark\"')",
     )
 
 

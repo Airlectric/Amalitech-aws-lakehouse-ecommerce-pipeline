@@ -12,3 +12,9 @@ variable "kms_key_arn" {
   description = "ARN of the KMS key used to encrypt Athena query results"
   type        = string
 }
+
+variable "bytes_scanned_cutoff_per_query" {
+  description = "Maximum bytes Athena may scan per query before cancelling it (cost guardrail). Default 10 GiB."
+  type        = number
+  default     = 10737418240 # 10 GiB
+}

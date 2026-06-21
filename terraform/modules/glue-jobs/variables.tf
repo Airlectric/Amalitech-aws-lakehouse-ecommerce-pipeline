@@ -31,20 +31,38 @@ variable "glue_etl_role_arn" {
 
 
 
+variable "worker_type" {
+  description = "Glue worker type for ETL jobs (G.1X, G.2X, G.4X, G.8X)"
+  type        = string
+  default     = "G.1X"
+}
+
 variable "worker_count" {
-  description = "Number of G.1X workers per Glue job"
+  description = "Maximum number of workers per Glue ETL job (auto-scaling scales down from this ceiling)"
   type        = number
-  default     = 2
+  default     = 10
 }
 
 variable "max_retries" {
-  description = "Maximum automatic retries for Glue jobs"
+  description = "Maximum automatic retries for Glue jobs. Default 0: jobs are idempotent; SFN handles retry orchestration."
   type        = number
-  default     = 1
+  default     = 0
 }
 
 variable "timeout_minutes" {
-  description = "Timeout in minutes for each Glue job"
+  description = "Timeout in minutes for each Glue ETL job"
   type        = number
-  default     = 60
+  default     = 90
+}
+
+variable "maintenance_schedule" {
+  description = "EventBridge Scheduler cron expression for the daily Delta maintenance run"
+  type        = string
+  default     = "cron(0 2 * * ? *)"
+}
+
+variable "vacuum_retain_hours" {
+  description = "Minimum hours to retain Delta Lake file versions before VACUUM removes them (must be >= 168)"
+  type        = number
+  default     = 168
 }

@@ -74,6 +74,7 @@ def merge_into_delta(
                     on subsequent merges (partitioning is fixed at table creation).
     """
     target_path = target_path.rstrip("/")
+    source_count = source_df.count()
 
     if DeltaTable.isDeltaTable(spark, target_path):
         target_table = DeltaTable.forPath(spark, target_path)
@@ -86,14 +87,37 @@ def merge_into_delta(
             .whenNotMatchedInsertAll()
             .execute()
         )
-        print(f"[delta_io] MERGE INTO {target_path} on {pk_col}")
+        print(f"[delta_io] MERGE INTO {target_path} on {pk_col} (source_rows={source_count})")
+
+        # Reconcile via Delta history metrics. Keys are available since Delta 2.x.
+        metrics = (
+            DeltaTable.forPath(spark, target_path)
+            .history(1)
+            .collect()[0]["operationMetrics"] or {}
+        )
+        inserted = int(metrics.get("numTargetRowsInserted", -1))
+        updated = int(metrics.get("numTargetRowsUpdated", -1))
+        if inserted >= 0 and updated >= 0 and (inserted + updated) != source_count:
+            raise RuntimeError(
+                f"[delta_io] MERGE reconciliation mismatch for {target_path}: "
+                f"source={source_count}, inserted={inserted}, updated={updated}, "
+                f"affected={inserted + updated}"
+            )
+        print(f"[delta_io] MERGE reconciled: inserted={inserted} updated={updated}")
     else:
         writer = source_df.write.format("delta").mode("overwrite")
         if partition_col:
             writer = writer.partitionBy(partition_col)
         writer.save(target_path)
+
+        written_count = spark.read.format("delta").load(target_path).count()
+        if written_count != source_count:
+            raise RuntimeError(
+                f"[delta_io] Initial write verification failed for {target_path}: "
+                f"source={source_count}, written={written_count}"
+            )
         print(
-            f"[delta_io] Initial Delta write to {target_path}"
+            f"[delta_io] Initial Delta write to {target_path}: {written_count} rows"
             + (f" partitioned by {partition_col}" if partition_col else "")
         )
 

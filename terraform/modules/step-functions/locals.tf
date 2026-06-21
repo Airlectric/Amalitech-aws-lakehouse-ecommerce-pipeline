@@ -34,10 +34,12 @@ locals {
     Parameters = {
       JobName = var.products_etl_job_name
       Arguments = {
-        "--run_date.$"    = "$.run_date"
-        "--raw_bucket.$"  = "$.bucket"
-        "--dwh_path"      = "s3://${var.dwh_bucket_id}/dwh"
-        "--rejected_path" = "s3://${var.rejected_bucket_id}/rejected"
+        "--run_date.$"            = "$.run_date"
+        "--raw_bucket.$"          = "$.bucket"
+        "--dwh_path"              = "s3://${var.dwh_bucket_id}/dwh"
+        "--rejected_path"         = "s3://${var.rejected_bucket_id}/rejected"
+        "--ingested_at.$"         = "$$.Execution.StartTime"
+        "--source_execution_id.$" = "$$.Execution.Id"
       }
     }
     Next  = "ArchiveFile"
@@ -53,10 +55,12 @@ locals {
     Parameters = {
       JobName = var.orders_etl_job_name
       Arguments = {
-        "--run_date.$"    = "$.run_date"
-        "--raw_bucket.$"  = "$.bucket"
-        "--dwh_path"      = "s3://${var.dwh_bucket_id}/dwh"
-        "--rejected_path" = "s3://${var.rejected_bucket_id}/rejected"
+        "--run_date.$"            = "$.run_date"
+        "--raw_bucket.$"          = "$.bucket"
+        "--dwh_path"              = "s3://${var.dwh_bucket_id}/dwh"
+        "--rejected_path"         = "s3://${var.rejected_bucket_id}/rejected"
+        "--ingested_at.$"         = "$$.Execution.StartTime"
+        "--source_execution_id.$" = "$$.Execution.Id"
       }
     }
     Next  = "ArchiveFile"
@@ -72,10 +76,12 @@ locals {
     Parameters = {
       JobName = var.order_items_etl_job_name
       Arguments = {
-        "--run_date.$"    = "$.run_date"
-        "--raw_bucket.$"  = "$.bucket"
-        "--dwh_path"      = "s3://${var.dwh_bucket_id}/dwh"
-        "--rejected_path" = "s3://${var.rejected_bucket_id}/rejected"
+        "--run_date.$"            = "$.run_date"
+        "--raw_bucket.$"          = "$.bucket"
+        "--dwh_path"              = "s3://${var.dwh_bucket_id}/dwh"
+        "--rejected_path"         = "s3://${var.rejected_bucket_id}/rejected"
+        "--ingested_at.$"         = "$$.Execution.StartTime"
+        "--source_execution_id.$" = "$$.Execution.Id"
       }
     }
     Next  = "ArchiveFile"
@@ -138,10 +144,12 @@ locals {
                 Parameters = {
                   JobName = var.products_etl_job_name
                   Arguments = {
-                    "--run_date.$"    = "$.run_date"
-                    "--raw_bucket.$"  = "$.bucket"
-                    "--dwh_path"      = "s3://${var.dwh_bucket_id}/dwh"
-                    "--rejected_path" = "s3://${var.rejected_bucket_id}/rejected"
+                    "--run_date.$"            = "$.run_date"
+                    "--raw_bucket.$"          = "$.bucket"
+                    "--dwh_path"              = "s3://${var.dwh_bucket_id}/dwh"
+                    "--rejected_path"         = "s3://${var.rejected_bucket_id}/rejected"
+                    "--ingested_at.$"         = "$$.Execution.StartTime"
+                    "--source_execution_id.$" = "$$.Execution.Id"
                   }
                 }
                 End = true
@@ -159,10 +167,12 @@ locals {
                 Parameters = {
                   JobName = var.orders_etl_job_name
                   Arguments = {
-                    "--run_date.$"    = "$.run_date"
-                    "--raw_bucket.$"  = "$.bucket"
-                    "--dwh_path"      = "s3://${var.dwh_bucket_id}/dwh"
-                    "--rejected_path" = "s3://${var.rejected_bucket_id}/rejected"
+                    "--run_date.$"            = "$.run_date"
+                    "--raw_bucket.$"          = "$.bucket"
+                    "--dwh_path"              = "s3://${var.dwh_bucket_id}/dwh"
+                    "--rejected_path"         = "s3://${var.rejected_bucket_id}/rejected"
+                    "--ingested_at.$"         = "$$.Execution.StartTime"
+                    "--source_execution_id.$" = "$$.Execution.Id"
                   }
                 }
                 End = true
@@ -180,10 +190,12 @@ locals {
                 Parameters = {
                   JobName = var.order_items_etl_job_name
                   Arguments = {
-                    "--run_date.$"    = "$.run_date"
-                    "--raw_bucket.$"  = "$.bucket"
-                    "--dwh_path"      = "s3://${var.dwh_bucket_id}/dwh"
-                    "--rejected_path" = "s3://${var.rejected_bucket_id}/rejected"
+                    "--run_date.$"            = "$.run_date"
+                    "--raw_bucket.$"          = "$.bucket"
+                    "--dwh_path"              = "s3://${var.dwh_bucket_id}/dwh"
+                    "--rejected_path"         = "s3://${var.rejected_bucket_id}/rejected"
+                    "--ingested_at.$"         = "$$.Execution.StartTime"
+                    "--source_execution_id.$" = "$$.Execution.Id"
                   }
                 }
                 End = true

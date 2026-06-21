@@ -24,8 +24,8 @@ resource "aws_sqs_queue_policy" "pipeline_dlq" {
       Action    = "sqs:SendMessage"
       Resource  = aws_sqs_queue.pipeline_dlq.arn
       Condition = {
-        ArnLike = {
-          "aws:SourceArn" = "arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:rule/${var.environment}-*"
+        ArnEquals = {
+          "aws:SourceArn" = "arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:rule/${var.environment}-raw-s3-put"
         }
       }
     }]
@@ -33,17 +33,34 @@ resource "aws_sqs_queue_policy" "pipeline_dlq" {
 }
 
 # ────────────────────────────────────────────────────────────────────────────
+# LAMBDA CLOUDWATCH LOG GROUPS
+# Explicit resources with bounded retention so Lambda cannot auto-create
+# groups with infinite retention (unbounded cost).
+# ────────────────────────────────────────────────────────────────────────────
+resource "aws_cloudwatch_log_group" "router" {
+  name              = "/aws/lambda/${var.environment}-pipeline-router"
+  retention_in_days = 30
+  tags              = merge(local.common_tags, { Name = "${var.environment}-pipeline-router-logs" })
+}
+
+resource "aws_cloudwatch_log_group" "archiver" {
+  name              = "/aws/lambda/${var.environment}-file-archiver"
+  retention_in_days = 30
+  tags              = merge(local.common_tags, { Name = "${var.environment}-file-archiver-logs" })
+}
+
+# ────────────────────────────────────────────────────────────────────────────
 # DEPLOYMENT PACKAGES
 # ────────────────────────────────────────────────────────────────────────────
 data "archive_file" "router" {
   type        = "zip"
-  source_file = "${path.root}/../../../lambda/handlers/router.py"
+  source_file = "${path.root}/../../../src/lambda_functions/router.py"
   output_path = "${path.module}/builds/router.zip"
 }
 
 data "archive_file" "archiver" {
   type        = "zip"
-  source_file = "${path.root}/../../../lambda/handlers/archiver.py"
+  source_file = "${path.root}/../../../src/lambda_functions/archiver.py"
   output_path = "${path.module}/builds/archiver.zip"
 }
 
@@ -63,7 +80,7 @@ resource "aws_lambda_function" "router" {
   memory_size      = 128
 
   tracing_config {
-    mode = "PassThrough"
+    mode = "Active"
   }
 
   environment {
@@ -104,7 +121,7 @@ resource "aws_lambda_function" "archiver" {
 
 
   tracing_config {
-    mode = "PassThrough"
+    mode = "Active"
   }
 
   environment {

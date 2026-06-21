@@ -60,3 +60,21 @@ variable "eventbridge_rule_name" {
   type        = string
   default     = ""
 }
+
+variable "dataset_names" {
+  description = "List of dataset names for per-dataset DQ rejection-rate alarms"
+  type        = list(string)
+  default     = ["products", "orders", "order_items"]
+}
+
+variable "dq_rejection_rate_threshold" {
+  description = "RejectedRatePct threshold (%) above which the DQ alarm fires"
+  type        = number
+  default     = 20
+}
+
+variable "sla_breach_hours" {
+  description = "Hours without a successful SFN execution before the SLA alarm fires"
+  type        = number
+  default     = 25
+}

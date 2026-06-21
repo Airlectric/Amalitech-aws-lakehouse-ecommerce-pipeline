@@ -33,6 +33,14 @@ resource "aws_glue_catalog_table" "products" {
 
     columns {
       name = "product_id"
+      type = "int"
+    }
+    columns {
+      name = "department_id"
+      type = "int"
+    }
+    columns {
+      name = "department"
       type = "string"
     }
     columns {
@@ -40,26 +48,16 @@ resource "aws_glue_catalog_table" "products" {
       type = "string"
     }
     columns {
-      name = "category"
+      name = "ingested_at"
       type = "string"
     }
     columns {
-      name = "price"
-      type = "double"
-    }
-    columns {
-      name = "stock_quantity"
-      type = "int"
-    }
-    columns {
-      name = "created_at"
-      type = "string"
-    }
-    columns {
-      name = "updated_at"
+      name = "source_execution_id"
       type = "string"
     }
   }
+  # products is not partitioned — the dimension table is small enough for
+  # full-table scans and partition pruning adds no value.
 }
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -86,33 +84,38 @@ resource "aws_glue_catalog_table" "orders" {
     }
 
     columns {
+      name = "order_num"
+      type = "int"
+    }
+    columns {
       name = "order_id"
-      type = "string"
+      type = "int"
     }
     columns {
-      name = "customer_id"
-      type = "string"
+      name = "user_id"
+      type = "int"
     }
     columns {
-      name = "order_status"
-      type = "string"
-    }
-    columns {
-      name = "order_date"
+      name = "order_timestamp"
       type = "string"
     }
     columns {
       name = "total_amount"
-      type = "double"
+      type = "float"
     }
     columns {
-      name = "created_at"
+      name = "ingested_at"
       type = "string"
     }
     columns {
-      name = "updated_at"
+      name = "source_execution_id"
       type = "string"
     }
+  }
+
+  partition_keys {
+    name = "date"
+    type = "string"
   }
 }
 
@@ -140,33 +143,50 @@ resource "aws_glue_catalog_table" "order_items" {
     }
 
     columns {
-      name = "order_item_id"
-      type = "string"
-    }
-    columns {
-      name = "order_id"
-      type = "string"
-    }
-    columns {
-      name = "product_id"
-      type = "string"
-    }
-    columns {
-      name = "quantity"
+      name = "id"
       type = "int"
     }
     columns {
-      name = "unit_price"
-      type = "double"
+      name = "order_id"
+      type = "int"
     }
     columns {
-      name = "line_total"
-      type = "double"
+      name = "user_id"
+      type = "int"
     }
     columns {
-      name = "created_at"
+      name = "days_since_prior_order"
+      type = "float"
+    }
+    columns {
+      name = "product_id"
+      type = "int"
+    }
+    columns {
+      name = "add_to_cart_order"
+      type = "int"
+    }
+    columns {
+      name = "reordered"
+      type = "int"
+    }
+    columns {
+      name = "order_timestamp"
       type = "string"
     }
+    columns {
+      name = "ingested_at"
+      type = "string"
+    }
+    columns {
+      name = "source_execution_id"
+      type = "string"
+    }
+  }
+
+  partition_keys {
+    name = "date"
+    type = "string"
   }
 }
 

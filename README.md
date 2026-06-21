@@ -222,6 +222,56 @@ Test coverage:
 
 ---
 
+## Delta Time-Travel
+
+Every MERGE into a Delta table commits a new version. Use time-travel to audit history,
+troubleshoot a bad run, or roll back to a known-good state.
+
+```python
+from delta.tables import DeltaTable
+
+# List the last 10 operations on the orders table
+dt = DeltaTable.forPath(spark, "s3://<DWH_BUCKET>/dwh/orders/")
+dt.history(10).select("version", "timestamp", "operation", "operationMetrics").show(truncate=False)
+
+# Read the table as of a specific version
+df_v3 = spark.read.format("delta").option("versionAsOf", 3).load("s3://<DWH_BUCKET>/dwh/orders/")
+
+# Read the table as of a timestamp (UTC)
+df_before = spark.read.format("delta") \
+    .option("timestampAsOf", "2025-04-01T00:00:00Z") \
+    .load("s3://<DWH_BUCKET>/dwh/orders/")
+
+# Restore the table to a previous version (permanent, overwrites current)
+dt.restoreToVersion(3)
+```
+
+> **Retention window:** the daily maintenance job runs `VACUUM RETAIN 168h` (7 days). Versions
+> older than 7 days cannot be restored via time-travel; use S3 object versioning for older
+> recovery (see `docs/runbooks.md §5.3`).
+
+---
+
+## Production Hardening
+
+This pipeline has been hardened across five tiers of the production-readiness audit. Key
+additions beyond the base implementation:
+
+| Area | What was added |
+|------|---------------|
+| Correctness | Referential integrity checks; empty-file guard; schema-drift detection; post-MERGE reconciliation |
+| Observability | CloudWatch DQ metrics (`Lakehouse/DQ`); SLA and rejection-rate alarms; X-Ray active tracing |
+| Lineage | `ingested_at` and `source_execution_id` columns on all Delta rows |
+| Maintenance | Daily OPTIMIZE + VACUUM Glue job via EventBridge Scheduler |
+| Scale | Glue auto-scaling; configurable worker type/count/timeout; Athena per-query scan limit |
+| Security | CloudTrail logs bucket SSE-KMS; S3 object tagging convention |
+| Operations | Runbooks (triage, DLQ replay, backfill, schema evolution, DR); `scripts/replay_dlq.py` |
+
+Full details: [`docs/production-readiness-audit.md`](docs/production-readiness-audit.md)  
+Operational procedures: [`docs/runbooks.md`](docs/runbooks.md)
+
+---
+
 ## Design Decisions
 
 ### Why Delta Lake instead of plain Parquet?
