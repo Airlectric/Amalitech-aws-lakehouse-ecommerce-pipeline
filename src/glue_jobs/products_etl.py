@@ -23,7 +23,7 @@ from pyspark.sql import SparkSession
 
 from common.delta_io import dedup_df, merge_into_delta, write_rejected
 from common.schemas import get_products_schema
-from common.validation import validate_df
+from common.validation import check_schema_drift, validate_df
 
 
 def main():
@@ -56,11 +56,19 @@ def main():
     products_raw_path = f"s3://{raw_bucket}/raw/products/"
     print(f"[products_etl] Reading raw products from {products_raw_path}")
 
+    schema = get_products_schema()
+    check_schema_drift(spark, products_raw_path, schema, "products")
+
     products_df = (
         spark.read.option("header", "true")
-        .schema(get_products_schema())
+        .schema(schema)
         .csv(products_raw_path)
     )
+
+    if products_df.isEmpty():
+        print("[products_etl] Source is empty; nothing to merge.")
+        spark.stop()
+        return
 
     valid_df, rejected_df = validate_df(products_df, "products", spark)
 

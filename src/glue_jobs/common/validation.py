@@ -145,6 +145,39 @@ def validate_df(
     return valid_df, rejected_df
 
 
+def check_schema_drift(
+    spark: SparkSession,
+    raw_path: str,
+    expected_schema,
+    dataset_name: str,
+) -> None:
+    """Raise ValueError if the CSV at raw_path has extra or missing columns.
+
+    Reads only the header row (no schema enforcement) so no full data scan
+    is needed. Raises before the main data read so a schema change surfaces
+    immediately with a clear error rather than silently null-filling or
+    dropping columns.
+
+    Parameters
+    ----------
+    spark           : active SparkSession.
+    raw_path        : S3 (or local) path to the CSV directory or file.
+    expected_schema : StructType from common.schemas (defines expected columns).
+    dataset_name    : used only for the error message.
+    """
+    actual_cols = set(spark.read.option("header", "true").csv(raw_path).columns)
+    expected_cols = set(expected_schema.fieldNames())
+    extra = actual_cols - expected_cols
+    missing = expected_cols - actual_cols
+    if extra or missing:
+        raise ValueError(
+            f"[validation] Schema drift for '{dataset_name}': "
+            f"extra_columns={sorted(extra) or 'none'}, "
+            f"missing_columns={sorted(missing) or 'none'}"
+        )
+    print(f"[validation] Schema OK for '{dataset_name}': {sorted(actual_cols)}")
+
+
 def validate_referential_integrity(
     df: DataFrame,
     dataset_name: str,

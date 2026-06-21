@@ -27,7 +27,7 @@ from pyspark.sql import SparkSession
 
 from common.delta_io import dedup_df, merge_into_delta, write_rejected
 from common.schemas import get_orders_schema
-from common.validation import validate_df
+from common.validation import check_schema_drift, validate_df
 
 
 def main():
@@ -61,11 +61,19 @@ def main():
     orders_raw_path = f"s3://{raw_bucket}/raw/orders/"
     print(f"[orders_etl] run_date={run_date} Reading raw orders from {orders_raw_path}")
 
+    schema = get_orders_schema()
+    check_schema_drift(spark, orders_raw_path, schema, "orders")
+
     orders_df = (
         spark.read.option("header", "true")
-        .schema(get_orders_schema())
+        .schema(schema)
         .csv(orders_raw_path)
     )
+
+    if orders_df.isEmpty():
+        print(f"[orders_etl] Source is empty for run_date={run_date}; nothing to merge.")
+        spark.stop()
+        return
 
     valid_df, rejected_df = validate_df(orders_df, "orders", spark)
 

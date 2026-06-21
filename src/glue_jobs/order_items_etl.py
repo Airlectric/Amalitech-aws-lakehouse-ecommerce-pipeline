@@ -27,7 +27,7 @@ from pyspark.sql import SparkSession
 
 from common.delta_io import dedup_df, merge_into_delta, write_rejected
 from common.schemas import get_order_items_schema
-from common.validation import validate_df, validate_referential_integrity
+from common.validation import check_schema_drift, validate_df, validate_referential_integrity
 
 
 def main():
@@ -64,11 +64,19 @@ def main():
         f"Reading raw order_items from {order_items_raw_path}"
     )
 
+    schema = get_order_items_schema()
+    check_schema_drift(spark, order_items_raw_path, schema, "order_items")
+
     order_items_df = (
         spark.read.option("header", "true")
-        .schema(get_order_items_schema())
+        .schema(schema)
         .csv(order_items_raw_path)
     )
+
+    if order_items_df.isEmpty():
+        print(f"[order_items_etl] Source is empty for run_date={run_date}; nothing to merge.")
+        spark.stop()
+        return
 
     valid_df, rejected_df = validate_df(order_items_df, "order_items", spark)
 
