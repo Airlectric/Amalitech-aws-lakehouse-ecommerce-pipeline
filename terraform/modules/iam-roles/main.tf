@@ -105,6 +105,26 @@ resource "aws_iam_role_policy" "glue_etl_kms" {
   })
 }
 
+resource "aws_iam_role_policy" "glue_etl_cloudwatch" {
+  name = "${var.environment}-glue-etl-cloudwatch"
+  role = aws_iam_role.glue_etl.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "PutDQMetrics"
+      Effect   = "Allow"
+      Action   = ["cloudwatch:PutMetricData"]
+      Resource = ["*"]
+      Condition = {
+        StringEquals = {
+          "cloudwatch:namespace" = "Lakehouse/DQ"
+        }
+      }
+    }]
+  })
+}
+
 resource "aws_iam_role_policy" "glue_etl_catalog" {
   name = "${var.environment}-glue-etl-catalog"
   role = aws_iam_role.glue_etl.id
@@ -154,6 +174,11 @@ resource "aws_iam_role_policy_attachment" "lambda_router_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_router_xray" {
+  role       = aws_iam_role.lambda_router.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
+}
+
 resource "aws_iam_role_policy" "lambda_router_sfn_dlq" {
   name = "${var.environment}-lambda-router-sfn-dlq"
   role = aws_iam_role.lambda_router.id
@@ -199,6 +224,11 @@ resource "aws_iam_role" "lambda_archiver" {
 resource "aws_iam_role_policy_attachment" "lambda_archiver_basic" {
   role       = aws_iam_role.lambda_archiver.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_archiver_xray" {
+  role       = aws_iam_role.lambda_archiver.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }
 
 

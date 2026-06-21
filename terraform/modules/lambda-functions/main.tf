@@ -63,7 +63,7 @@ resource "aws_lambda_function" "router" {
   memory_size      = 128
 
   tracing_config {
-    mode = "PassThrough"
+    mode = "Active"
   }
 
   environment {
@@ -104,7 +104,7 @@ resource "aws_lambda_function" "archiver" {
 
 
   tracing_config {
-    mode = "PassThrough"
+    mode = "Active"
   }
 
   environment {

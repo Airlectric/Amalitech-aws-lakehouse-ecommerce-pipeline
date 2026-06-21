@@ -131,6 +131,58 @@ resource "aws_cloudwatch_metric_alarm" "dlq_messages_visible" {
 }
 
 # ────────────────────────────────────────────────────────────────────────────
+# ALARM – SFN pipeline SLA (no successful execution in N hours)
+# ────────────────────────────────────────────────────────────────────────────
+resource "aws_cloudwatch_metric_alarm" "sfn_sla_breach" {
+  alarm_name          = "${var.environment}-pipeline-sla-breach"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "ExecutionsSucceeded"
+  namespace           = "AWS/States"
+  period              = tostring(var.sla_breach_hours * 3600)
+  statistic           = "Sum"
+  threshold           = "1"
+  alarm_description   = "No successful pipeline execution in ${var.sla_breach_hours} hours"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+  treat_missing_data  = "breaching"
+
+  dimensions = {
+    StateMachineArn = var.step_functions_state_machine_arn
+  }
+
+  tags = merge(local.common_tags, { Name = "${var.environment}-pipeline-sla-breach" })
+}
+
+# ────────────────────────────────────────────────────────────────────────────
+# ALARMS – DQ rejection rate per dataset (custom Lakehouse/DQ metric)
+# Fires when > var.dq_rejection_rate_threshold % of rows are rejected,
+# which could indicate a schema change or upstream data quality issue.
+# ────────────────────────────────────────────────────────────────────────────
+resource "aws_cloudwatch_metric_alarm" "dq_rejection_rate" {
+  for_each = toset(var.dataset_names)
+
+  alarm_name          = "${var.environment}-dq-${each.key}-rejection-rate-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "RejectedRatePct"
+  namespace           = "Lakehouse/DQ"
+  period              = "86400"
+  extended_statistic  = "p100"
+  threshold           = tostring(var.dq_rejection_rate_threshold)
+  alarm_description   = "${each.key} rejection rate exceeded ${var.dq_rejection_rate_threshold}% in the last 24 hours"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    Dataset = each.key
+  }
+
+  tags = merge(local.common_tags, { Name = "${var.environment}-dq-${each.key}-rejection-rate-high" })
+}
+
+# ────────────────────────────────────────────────────────────────────────────
 # CLOUDTRAIL – S3 DATA EVENTS + MANAGEMENT EVENTS
 # Logs raw and DWH bucket data-plane events so every GetObject / PutObject
 # call is auditable.  Management events cover IAM, Glue, Lambda API calls.
