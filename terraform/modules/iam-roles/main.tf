@@ -169,9 +169,21 @@ resource "aws_iam_role" "lambda_router" {
   tags = merge(local.common_tags, { Name = "${var.environment}-lambda-router" })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_router_basic" {
-  role       = aws_iam_role.lambda_router.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+resource "aws_iam_role_policy" "lambda_router_logs" {
+  name = "${var.environment}-lambda-router-logs"
+  role = aws_iam_role.lambda_router.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+      ]
+      Resource = ["arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.environment}-pipeline-router:*"]
+    }]
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_router_xray" {
@@ -221,9 +233,21 @@ resource "aws_iam_role" "lambda_archiver" {
   tags = merge(local.common_tags, { Name = "${var.environment}-lambda-archiver" })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_archiver_basic" {
-  role       = aws_iam_role.lambda_archiver.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+resource "aws_iam_role_policy" "lambda_archiver_logs" {
+  name = "${var.environment}-lambda-archiver-logs"
+  role = aws_iam_role.lambda_archiver.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+      ]
+      Resource = ["arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.environment}-file-archiver:*"]
+    }]
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_archiver_xray" {
