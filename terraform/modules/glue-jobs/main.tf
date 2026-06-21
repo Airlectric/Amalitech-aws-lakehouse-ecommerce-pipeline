@@ -143,10 +143,11 @@ resource "aws_scheduler_schedule" "maintenance" {
   schedule_expression_timezone = "UTC"
 
   target {
-    arn      = "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:job/${aws_glue_job.maintenance.name}"
+    arn      = "arn:aws:scheduler:::aws-sdk:glue:startJobRun"
     role_arn = aws_iam_role.glue_scheduler.arn
 
     input = jsonencode({
+      JobName = aws_glue_job.maintenance.name
       Arguments = {
         "--dwh_path"            = "s3://${var.dwh_bucket_id}/dwh"
         "--vacuum_retain_hours" = tostring(var.vacuum_retain_hours)
