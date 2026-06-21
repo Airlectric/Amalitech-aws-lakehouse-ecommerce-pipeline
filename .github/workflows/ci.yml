@@ -200,6 +200,12 @@ jobs:
           sed -i "s|YOUR_KMS_KEY_ARN|${{ secrets.P2_TF_STATE_KMS_KEY_ARN }}|" backend-dev.hcl
           terraform init -backend-config=backend-dev.hcl
 
+      - name: Import pre-existing Lambda log groups
+        run: |
+          VAR="-var=bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }}"
+          terraform import $VAR 'module.lambda_functions.aws_cloudwatch_log_group.router' '/aws/lambda/lakehouse-dev-pipeline-router' || true
+          terraform import $VAR 'module.lambda_functions.aws_cloudwatch_log_group.archiver' '/aws/lambda/lakehouse-dev-file-archiver' || true
+
       - name: Terraform Plan for Apply
         run: terraform plan -no-color -out=tfplan -var="bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }}"
 
