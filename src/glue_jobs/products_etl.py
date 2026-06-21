@@ -70,7 +70,7 @@ def main():
         spark.stop()
         return
 
-    valid_df, rejected_df = validate_df(products_df, "products", spark)
+    valid_df, rejected_df = validate_df(products_df, "products", spark, run_date="N/A")
 
     deduped_df = dedup_df(valid_df, pk_col="product_id", ts_col=None)
 

@@ -78,7 +78,7 @@ def main():
         spark.stop()
         return
 
-    valid_df, rejected_df = validate_df(order_items_df, "order_items", spark)
+    valid_df, rejected_df = validate_df(order_items_df, "order_items", spark, run_date=run_date)
 
     # FK checks: orphan order_id / product_id rows are routed to rejected.
     clean_df, ri_orphans_df = validate_referential_integrity(

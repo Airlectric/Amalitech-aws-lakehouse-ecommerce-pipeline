@@ -83,6 +83,7 @@ def validate_df(
     df: DataFrame,
     dataset_name: str,
     spark: SparkSession,
+    run_date: str = "N/A",
 ):
     """Split *df* into (valid_df, rejected_df) according to dataset-specific rules.
 
@@ -107,6 +108,7 @@ def validate_df(
     df           : input DataFrame (raw, with string columns for timestamps/dates).
     dataset_name : one of "products", "orders", "order_items".
     spark        : active SparkSession (reserved for future use / Glue context).
+    run_date     : processing date string (YYYY-MM-DD) used as a CloudWatch dimension.
 
     Returns
     -------
@@ -142,7 +144,54 @@ def validate_df(
         f"rejected={rejected_count}"
     )
 
+    emit_dq_metrics(dataset_name, run_date, total_count, valid_count, rejected_count)
+
     return valid_df, rejected_df
+
+
+def emit_dq_metrics(
+    dataset_name: str,
+    run_date: str,
+    total_count: int,
+    valid_count: int,
+    rejected_count: int,
+) -> None:
+    """Publish row-count DQ metrics to CloudWatch (namespace: Lakehouse/DQ).
+
+    Metrics emitted
+    ---------------
+    TotalRows, ValidRows, RejectedRows, RejectedRatePct
+
+    Dimensions: Dataset=<dataset_name>, RunDate=<run_date>
+
+    Failures are logged and swallowed so a CloudWatch outage never aborts an
+    otherwise-healthy ETL job.
+    """
+    import boto3
+
+    rejected_rate = (rejected_count / total_count * 100.0) if total_count > 0 else 0.0
+    dimensions = [
+        {"Name": "Dataset", "Value": dataset_name},
+        {"Name": "RunDate", "Value": run_date},
+    ]
+    metric_data = [
+        {"MetricName": "TotalRows", "Value": float(total_count), "Unit": "Count", "Dimensions": dimensions},
+        {"MetricName": "ValidRows", "Value": float(valid_count), "Unit": "Count", "Dimensions": dimensions},
+        {"MetricName": "RejectedRows", "Value": float(rejected_count), "Unit": "Count", "Dimensions": dimensions},
+        {"MetricName": "RejectedRatePct", "Value": rejected_rate, "Unit": "Percent", "Dimensions": dimensions},
+    ]
+    try:
+        boto3.client("cloudwatch").put_metric_data(
+            Namespace="Lakehouse/DQ",
+            MetricData=metric_data,
+        )
+        print(
+            f"[validation] DQ metrics emitted for dataset={dataset_name} run_date={run_date}: "
+            f"total={total_count} valid={valid_count} rejected={rejected_count} "
+            f"rate={rejected_rate:.1f}%"
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"[validation] WARNING: failed to emit DQ metrics ({exc}); continuing.")
 
 
 def check_schema_drift(

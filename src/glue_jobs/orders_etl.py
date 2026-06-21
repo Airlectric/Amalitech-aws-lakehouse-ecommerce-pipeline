@@ -75,7 +75,7 @@ def main():
         spark.stop()
         return
 
-    valid_df, rejected_df = validate_df(orders_df, "orders", spark)
+    valid_df, rejected_df = validate_df(orders_df, "orders", spark, run_date=run_date)
 
     deduped_df = dedup_df(valid_df, pk_col="order_id", ts_col="order_timestamp")
 
