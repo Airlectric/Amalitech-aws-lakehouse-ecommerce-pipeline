@@ -11,6 +11,10 @@ Operational procedures for the Delta Lake e-commerce lakehouse pipeline.
 3. [Manual Backfill](#3-manual-backfill)
 4. [Schema Evolution](#4-schema-evolution)
 5. [Disaster Recovery](#5-disaster-recovery)
+6. [S3 Object Tagging Convention](#6-s3-object-tagging-convention)
+3. [Manual Backfill](#3-manual-backfill)
+4. [Schema Evolution](#4-schema-evolution)
+5. [Disaster Recovery](#5-disaster-recovery)
 
 ---
 
@@ -353,3 +357,62 @@ python scripts/upload_raw.py --bucket <RAW_BUCKET>
 - **No cross-region replication** is configured — acceptable for a dev/training environment;
   a production deployment should enable S3 Cross-Region Replication on both the raw and DWH
   buckets for geographic redundancy.
+
+---
+
+## 6. S3 Object Tagging Convention
+
+Object tags provide fine-grained cost allocation, access control, and lifecycle filtering
+independent of S3 key prefix. All objects written to the lakehouse buckets should carry the
+following tags.
+
+### 6.1 Required tags
+
+| Tag key | Example value | Purpose |
+|---------|--------------|---------|
+| `project` | `lakehouse-ecommerce` | Cost allocation; matches bucket-level tag |
+| `environment` | `dev` / `prod` | Separates dev/prod costs and policies |
+| `dataset` | `orders` | Identifies the logical dataset |
+| `sensitivity` | `internal` | Data classification (`public` / `internal` / `confidential`) |
+| `owner` | `data-engineering` | Team responsible for the data |
+
+### 6.2 Optional lifecycle tags
+
+| Tag key | Example value | Purpose |
+|---------|--------------|---------|
+| `retention` | `7y` | Drives lifecycle / legal-hold decisions |
+| `ingested_at` | `2025-04-01T02:00:00Z` | Links object to the SFN run |
+
+### 6.3 Where to set tags
+
+Tags are set at write time, not at bucket creation time. Each writer is responsible:
+
+| Writer | How to tag |
+|--------|-----------|
+| Glue ETL jobs | `spark.conf.set("fs.s3a.create.storage-class", ...)` is not applicable for tags; use `boto3.client("s3").put_object_tagging()` after the Glue job writes the rejected Parquet, or configure the `hadoop-aws` tag via a Spark `ExtraConf`. |
+| Archiver Lambda | Add `Tagging` to `copy_object` call: `CopySourceTagging="COPY"` to propagate source tags, or set explicitly. |
+| `scripts/upload_raw.py` | Pass `ExtraArgs={"Tagging": "dataset=products&sensitivity=internal&..."}` to `upload_file`. |
+
+### 6.4 Tag-based S3 lifecycle rules (future)
+
+Once objects are consistently tagged, add tag-based filters to the existing lifecycle rules
+in `terraform/modules/s3-data-lake/main.tf`:
+
+```hcl
+filter {
+  tag {
+    key   = "retention"
+    value = "7y"
+  }
+}
+```
+
+This lets you apply different retention windows to different data classifications without
+depending on key prefix alone.
+
+### 6.5 Lake Formation note
+
+Column-level and row-level access control is best handled by AWS Lake Formation rather than
+S3 object tags alone. Lake Formation is not implemented in this project. If fine-grained
+access control is required (e.g., PII columns accessible only to specific roles), enabling
+Lake Formation over the existing Glue Catalog is the recommended next step.
