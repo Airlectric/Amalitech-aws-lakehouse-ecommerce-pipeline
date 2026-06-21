@@ -47,6 +47,14 @@ resource "aws_glue_catalog_table" "products" {
       name = "product_name"
       type = "string"
     }
+    columns {
+      name = "ingested_at"
+      type = "string"
+    }
+    columns {
+      name = "source_execution_id"
+      type = "string"
+    }
   }
   # products is not partitioned — the dimension table is small enough for
   # full-table scans and partition pruning adds no value.
@@ -94,6 +102,14 @@ resource "aws_glue_catalog_table" "orders" {
     columns {
       name = "total_amount"
       type = "float"
+    }
+    columns {
+      name = "ingested_at"
+      type = "string"
+    }
+    columns {
+      name = "source_execution_id"
+      type = "string"
     }
   }
 
@@ -156,6 +172,14 @@ resource "aws_glue_catalog_table" "order_items" {
     }
     columns {
       name = "order_timestamp"
+      type = "string"
+    }
+    columns {
+      name = "ingested_at"
+      type = "string"
+    }
+    columns {
+      name = "source_execution_id"
       type = "string"
     }
   }

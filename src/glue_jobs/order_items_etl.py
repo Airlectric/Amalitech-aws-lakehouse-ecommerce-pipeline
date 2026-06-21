@@ -35,13 +35,15 @@ def main():
 
     args = getResolvedOptions(
         sys.argv,
-        ["raw_bucket", "dwh_path", "rejected_path", "run_date"],
+        ["raw_bucket", "dwh_path", "rejected_path", "run_date", "ingested_at", "source_execution_id"],
     )
 
     raw_bucket = args["raw_bucket"]
     dwh_path = args["dwh_path"].rstrip("/")
     rejected_path = args["rejected_path"].rstrip("/")
     run_date = args["run_date"]
+    ingested_at = args["ingested_at"]
+    source_execution_id = args["source_execution_id"]
 
     spark = (
         SparkSession.builder.appName("OrderItemsETL")
@@ -86,7 +88,14 @@ def main():
     )
     all_rejected_df = rejected_df.union(ri_orphans_df)
 
+    from pyspark.sql import functions as F
+
     deduped_df = dedup_df(clean_df, pk_col="id", ts_col="order_timestamp")
+    deduped_df = (
+        deduped_df
+        .withColumn("ingested_at", F.lit(ingested_at))
+        .withColumn("source_execution_id", F.lit(source_execution_id))
+    )
 
     target_delta_path = f"{dwh_path}/order_items/"
     merge_into_delta(

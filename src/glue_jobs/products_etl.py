@@ -31,12 +31,14 @@ def main():
 
     args = getResolvedOptions(
         sys.argv,
-        ["raw_bucket", "dwh_path", "rejected_path"],
+        ["raw_bucket", "dwh_path", "rejected_path", "ingested_at", "source_execution_id"],
     )
 
     raw_bucket = args["raw_bucket"]
     dwh_path = args["dwh_path"].rstrip("/")
     rejected_path = args["rejected_path"].rstrip("/")
+    ingested_at = args["ingested_at"]
+    source_execution_id = args["source_execution_id"]
 
     spark = (
         SparkSession.builder.appName("ProductsETL")
@@ -72,7 +74,14 @@ def main():
 
     valid_df, rejected_df = validate_df(products_df, "products", spark, run_date="N/A")
 
+    from pyspark.sql import functions as F
+
     deduped_df = dedup_df(valid_df, pk_col="product_id", ts_col=None)
+    deduped_df = (
+        deduped_df
+        .withColumn("ingested_at", F.lit(ingested_at))
+        .withColumn("source_execution_id", F.lit(source_execution_id))
+    )
 
     target_delta_path = f"{dwh_path}/products/"
     merge_into_delta(spark, deduped_df, target_delta_path, pk_col="product_id")
