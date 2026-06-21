@@ -27,7 +27,7 @@ from pyspark.sql import SparkSession
 
 from common.delta_io import dedup_df, merge_into_delta, write_rejected
 from common.schemas import get_order_items_schema
-from common.validation import validate_df
+from common.validation import validate_df, validate_referential_integrity
 
 
 def main():
@@ -72,7 +72,13 @@ def main():
 
     valid_df, rejected_df = validate_df(order_items_df, "order_items", spark)
 
-    deduped_df = dedup_df(valid_df, pk_col="id", ts_col="order_timestamp")
+    # FK checks: orphan order_id / product_id rows are routed to rejected.
+    clean_df, ri_orphans_df = validate_referential_integrity(
+        valid_df, "order_items", spark, dwh_path
+    )
+    all_rejected_df = rejected_df.union(ri_orphans_df)
+
+    deduped_df = dedup_df(clean_df, pk_col="id", ts_col="order_timestamp")
 
     target_delta_path = f"{dwh_path}/order_items/"
     merge_into_delta(
@@ -83,7 +89,7 @@ def main():
         partition_col="date",
     )
 
-    write_rejected(rejected_df, rejected_path, "order_items")
+    write_rejected(all_rejected_df, rejected_path, "order_items")
 
     print(f"[order_items_etl] Job completed successfully for run_date={run_date}.")
     spark.stop()

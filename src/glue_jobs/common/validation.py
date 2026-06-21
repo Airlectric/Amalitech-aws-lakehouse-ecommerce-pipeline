@@ -1,5 +1,6 @@
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
+from pyspark.sql.types import StringType, StructField, StructType
 
 
 # Sentinel column injected into rejected rows to describe why they were rejected.
@@ -142,3 +143,79 @@ def validate_df(
     )
 
     return valid_df, rejected_df
+
+
+def validate_referential_integrity(
+    df: DataFrame,
+    dataset_name: str,
+    spark: SparkSession,
+    dwh_path: str,
+) -> tuple:
+    """Anti-join order_items rows against parent Delta tables; return (clean_df, orphans_df).
+
+    Only runs for 'order_items'. For every other dataset returns (df, empty_orphans_df)
+    immediately. If a parent Delta table has not been created yet (first pipeline run),
+    the corresponding FK check is skipped gracefully so the initial load still succeeds.
+
+    FK rules
+    --------
+    order_items.order_id   must exist in orders.order_id
+    order_items.product_id must exist in products.product_id
+
+    Parameters
+    ----------
+    df           : valid rows produced by validate_df (no rejection_reason column).
+    dataset_name : logical dataset name; only 'order_items' triggers RI checks.
+    spark        : active SparkSession.
+    dwh_path     : S3 (or local) base path of the lakehouse Delta tables.
+
+    Returns
+    -------
+    (clean_df, orphans_df)
+        clean_df   — rows that pass all FK checks; no rejection_reason column.
+        orphans_df — rows that failed at least one FK check; has rejection_reason column.
+    """
+    from delta.tables import DeltaTable
+
+    _empty_orphans = spark.createDataFrame(
+        [],
+        StructType(list(df.schema.fields) + [StructField(_REJECTION_COL, StringType(), True)]),
+    )
+
+    if dataset_name != "order_items":
+        return df, _empty_orphans
+
+    dwh_path = dwh_path.rstrip("/")
+    clean_df = df
+    orphan_frames = []
+
+    for fk_col, parent_table, parent_pk in (
+        ("order_id", "orders", "order_id"),
+        ("product_id", "products", "product_id"),
+    ):
+        parent_path = f"{dwh_path}/{parent_table}"
+        if not DeltaTable.isDeltaTable(spark, parent_path):
+            print(
+                f"[validation] RI: {parent_path} not found; "
+                f"skipping {fk_col} FK check on first run"
+            )
+            continue
+
+        parent_pks = (
+            spark.read.format("delta").load(parent_path).select(parent_pk).distinct()
+        )
+        orphans = clean_df.join(parent_pks, on=fk_col, how="left_anti").withColumn(
+            _REJECTION_COL, F.lit(f"orphan {fk_col}")
+        )
+        orphan_frames.append(orphans)
+        clean_df = clean_df.join(parent_pks, on=fk_col, how="inner")
+
+    if not orphan_frames:
+        return clean_df, _empty_orphans
+
+    orphans_df = orphan_frames[0]
+    for frame in orphan_frames[1:]:
+        orphans_df = orphans_df.union(frame)
+
+    print(f"[validation] RI check complete for '{dataset_name}'")
+    return clean_df, orphans_df
