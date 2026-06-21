@@ -13,24 +13,22 @@ on:
           - apply
           - destroy
   push:
-    branches: [develop]
+    branches: [develop, main]
     paths:
       - "terraform/**"
       - "tests/**"
       - ".github/workflows/**"
-      - "lambda/**"
-      - "glue/**"
+      - "src/**"
       - "scripts/empty_terraform_s3_buckets.sh"
       - "pyproject.toml"
       - ".tflint.hcl"
   pull_request:
-    branches: [develop]
+    branches: [develop, main]
     paths:
       - "terraform/**"
       - "tests/**"
       - ".github/workflows/**"
-      - "lambda/**"
-      - "glue/**"
+      - "src/**"
       - "scripts/empty_terraform_s3_buckets.sh"
       - "pyproject.toml"
       - ".tflint.hcl"
@@ -58,11 +56,16 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+
       - name: Install dependencies
         run: pip install -r tests/requirements.txt
 
       - name: Run tests
-        run: python -m pytest tests/ -v --ignore=tests/test_validation.py -k "not slow" --tb=short
+        run: python -m pytest tests/ -v --tb=short
 
   static_checks:
     name: Static Checks

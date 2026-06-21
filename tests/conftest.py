@@ -23,6 +23,10 @@ def pytest_configure(config):
         "markers",
         "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     )
+    config.addinivalue_line(
+        "markers",
+        "spark: marks tests that require PySpark + Java 11 (skip with '-m \"not spark\"')",
+    )
 
 
 @pytest.fixture
