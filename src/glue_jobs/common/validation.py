@@ -135,7 +135,7 @@ def validate_df(
 
     total_count = df.count()
     valid_count = valid_df.count()
-    rejected_count = rejected_df.count()
+    rejected_count = total_count - valid_count
 
     print(
         f"[validation] dataset={dataset_name} "
