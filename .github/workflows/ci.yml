@@ -133,7 +133,9 @@ jobs:
 
       - name: Terraform Plan
         run: |
-          terraform plan -no-color -out=tfplan -var="bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }}"
+          terraform plan -no-color -out=tfplan \
+            -var="bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }}" \
+            -var="alert_emails=${{ secrets.SNS_ALERT_EMAILS }}"
           terraform show -no-color tfplan > tfplan.txt
 
       - name: Upload Plan Artifact
@@ -202,12 +204,15 @@ jobs:
 
       - name: Import pre-existing Lambda log groups
         run: |
-          VAR="-var=bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }}"
+          VAR="-var=bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }} -var=alert_emails=${{ secrets.SNS_ALERT_EMAILS }}"
           terraform import $VAR 'module.lambda_functions.aws_cloudwatch_log_group.router' '/aws/lambda/lakehouse-dev-pipeline-router' || true
           terraform import $VAR 'module.lambda_functions.aws_cloudwatch_log_group.archiver' '/aws/lambda/lakehouse-dev-file-archiver' || true
 
       - name: Terraform Plan for Apply
-        run: terraform plan -no-color -out=tfplan -var="bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }}"
+        run: |
+          terraform plan -no-color -out=tfplan \
+            -var="bucket_suffix=${{ secrets.AWS_ACCOUNT_ID }}" \
+            -var="alert_emails=${{ secrets.SNS_ALERT_EMAILS }}"
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
