@@ -166,7 +166,7 @@ resource "aws_glue_job" "products_etl" {
   name              = "${var.environment}-products-etl"
   role_arn          = var.glue_etl_role_arn
   glue_version      = "4.0"
-  worker_type       = "G.1X"
+  worker_type       = var.worker_type
   number_of_workers = var.worker_count
 
   max_retries = var.max_retries
@@ -202,7 +202,7 @@ resource "aws_glue_job" "orders_etl" {
   name              = "${var.environment}-orders-etl"
   role_arn          = var.glue_etl_role_arn
   glue_version      = "4.0"
-  worker_type       = "G.1X"
+  worker_type       = var.worker_type
   number_of_workers = var.worker_count
 
   max_retries = var.max_retries
@@ -238,7 +238,7 @@ resource "aws_glue_job" "order_items_etl" {
   name              = "${var.environment}-order-items-etl"
   role_arn          = var.glue_etl_role_arn
   glue_version      = "4.0"
-  worker_type       = "G.1X"
+  worker_type       = var.worker_type
   number_of_workers = var.worker_count
 
   max_retries = var.max_retries

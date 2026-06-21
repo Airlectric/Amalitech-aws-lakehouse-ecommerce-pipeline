@@ -31,10 +31,16 @@ variable "glue_etl_role_arn" {
 
 
 
+variable "worker_type" {
+  description = "Glue worker type for ETL jobs (G.1X, G.2X, G.4X, G.8X)"
+  type        = string
+  default     = "G.1X"
+}
+
 variable "worker_count" {
-  description = "Number of G.1X workers per Glue job"
+  description = "Maximum number of workers per Glue ETL job (auto-scaling scales down from this ceiling)"
   type        = number
-  default     = 2
+  default     = 10
 }
 
 variable "max_retries" {
@@ -44,9 +50,9 @@ variable "max_retries" {
 }
 
 variable "timeout_minutes" {
-  description = "Timeout in minutes for each Glue job"
+  description = "Timeout in minutes for each Glue ETL job"
   type        = number
-  default     = 60
+  default     = 90
 }
 
 variable "maintenance_schedule" {
