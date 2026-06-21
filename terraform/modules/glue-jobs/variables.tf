@@ -44,9 +44,9 @@ variable "worker_count" {
 }
 
 variable "max_retries" {
-  description = "Maximum automatic retries for Glue jobs"
+  description = "Maximum automatic retries for Glue jobs. Default 0: jobs are idempotent; SFN handles retry orchestration."
   type        = number
-  default     = 1
+  default     = 0
 }
 
 variable "timeout_minutes" {
