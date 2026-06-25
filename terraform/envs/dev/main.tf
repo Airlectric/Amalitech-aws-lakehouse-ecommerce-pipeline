@@ -123,3 +123,12 @@ module "observability" {
   alert_emails                     = var.alert_emails
   eventbridge_rule_name            = module.eventbridge.event_rule_name
 }
+
+# ── DLQ replayer (automated ESM + manual script in scripts/replay_dlq.py) ────
+module "dlq_replayer" {
+  source = "../../modules/dlq-replayer"
+
+  environment       = var.environment
+  dlq_arn           = module.lambda_functions.pipeline_dlq_arn
+  state_machine_arn = module.step_functions.state_machine_arn
+}
