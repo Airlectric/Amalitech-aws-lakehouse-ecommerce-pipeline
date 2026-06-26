@@ -68,10 +68,15 @@ for bucket in "${buckets[@]}"; do
       break
     fi
 
+    # Write JSON to a temp file — passing large payloads inline hits ARG_MAX on
+    # buckets with thousands of versions (e.g. CloudTrail logs buckets).
+    tmp_delete="$(mktemp)"
+    printf '%s' "${delete_json}" >"${tmp_delete}"
     aws s3api delete-objects \
       --bucket "${bucket}" \
-      --delete "${delete_json}" \
+      --delete "file://${tmp_delete}" \
       --region "${REGION}" >/dev/null
+    rm -f "${tmp_delete}"
     printf 'Deleted %s object versions/delete markers from %s\n' "${delete_count}" "${bucket}"
   done
 
