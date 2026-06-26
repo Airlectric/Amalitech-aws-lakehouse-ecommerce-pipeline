@@ -58,7 +58,10 @@ for bucket in "${buckets[@]}"; do
     delete_json="$(
       printf '%s' "${versions_json}" |
         jq -c '{
-          Objects: (((.Versions // []) + (.DeleteMarkers // [])) | map({Key, VersionId})),
+          Objects: (
+            ((.Versions // []) + (.DeleteMarkers // []))
+            | map({ Key, VersionId } | with_entries(select(.value != null)))
+          ),
           Quiet: true
         }'
     )"
