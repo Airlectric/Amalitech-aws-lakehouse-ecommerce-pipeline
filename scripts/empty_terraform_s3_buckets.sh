@@ -60,7 +60,20 @@ for bucket in "${buckets[@]}"; do
         jq -c '{
           Objects: (
             ((.Versions // []) + (.DeleteMarkers // []))
-            | map({ Key, VersionId } | with_entries(select(.value != null)))
+            | map(
+                {
+                  Key,
+                  # S3 stores VersionId as the string "null" for objects
+                  # written while versioning was suspended. Omit VersionId
+                  # entirely in that case — the API rejects "null" as invalid.
+                  VersionId: (
+                    if .VersionId != null and .VersionId != "null"
+                    then .VersionId
+                    else empty
+                    end
+                  )
+                }
+              )
           ),
           Quiet: true
         }'
