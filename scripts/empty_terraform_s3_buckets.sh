@@ -69,7 +69,7 @@ for bucket in "${buckets[@]}"; do
                   VersionId: (
                     if .VersionId != null and .VersionId != "null"
                     then .VersionId
-                    else empty
+                    else "null"
                     end
                   )
                 }
