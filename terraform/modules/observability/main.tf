@@ -189,7 +189,7 @@ resource "aws_cloudwatch_metric_alarm" "dq_rejection_rate" {
 # ────────────────────────────────────────────────────────────────────────────
 resource "aws_s3_bucket" "cloudtrail_logs" {
   bucket        = "${var.environment}-lakehouse-cloudtrail-logs-${data.aws_caller_identity.current.account_id}"
-  force_destroy = false
+  force_destroy = true
 
   tags = merge(local.common_tags, { Name = "${var.environment}-cloudtrail-logs" })
 }
