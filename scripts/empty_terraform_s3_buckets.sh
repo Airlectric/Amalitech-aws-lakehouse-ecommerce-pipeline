@@ -51,7 +51,7 @@ for bucket in "${buckets[@]}"; do
     versions_json="$(
       aws s3api list-object-versions \
         --bucket "${bucket}" \
-        --max-items 1000 \
+        --max-keys 1000 \
         --region "${REGION}" \
         --output json
     )"
